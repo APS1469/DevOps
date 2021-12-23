@@ -2,7 +2,7 @@
 	"name": "AzureSqlTable1",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "asdb1linked",
+			"referenceName": "AzureSqlDatabase1",
 			"type": "LinkedServiceReference"
 		},
 		"annotations": [],
@@ -83,7 +83,7 @@
 		],
 		"typeProperties": {
 			"schema": "dbo",
-			"table": ""
+			"table": "PurchaseOrderHeader"
 		}
 	}
 }
