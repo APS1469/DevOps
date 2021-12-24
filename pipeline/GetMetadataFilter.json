@@ -69,7 +69,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('FilterCSV').output.value",
+						"value": "@activity('FilterCSV').output.value\n",
 						"type": "Expression"
 					},
 					"activities": [
