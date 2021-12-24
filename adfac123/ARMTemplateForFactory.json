@@ -98,7 +98,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"items": {
-								"value": "@activity('FilterCSV').output.value",
+								"value": "@activity('FilterCSV').output.value\n",
 								"type": "Expression"
 							},
 							"activities": [
@@ -398,6 +398,51 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
+						"container": "con1"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": false,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "sno",
+						"type": "String"
+					},
+					{
+						"name": "financial year",
+						"type": "String"
+					},
+					{
+						"name": "quarter",
+						"type": "String"
+					},
+					{
+						"name": "amount",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DelimitedText2')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "CSV",
 						"container": "con1"
 					},
 					"columnDelimiter": ",",
@@ -890,51 +935,6 @@
 				"[concat(variables('factoryId'), '/datasets/POD')]",
 				"[concat(variables('factoryId'), '/datasets/Product')]",
 				"[concat(variables('factoryId'), '/datasets/AzureSqlTable2')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DelimitedText2')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureBlobStorage",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "DelimitedText",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"folderPath": "CSV",
-						"container": "con1"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": [
-					{
-						"name": "sno",
-						"type": "String"
-					},
-					{
-						"name": "financial year",
-						"type": "String"
-					},
-					{
-						"name": "quarter",
-						"type": "String"
-					},
-					{
-						"name": "amount",
-						"type": "String"
-					}
-				]
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage')]"
 			]
 		}
 	]
