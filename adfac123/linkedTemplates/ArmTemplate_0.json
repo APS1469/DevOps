@@ -18,6 +18,10 @@
 		"asdb1linked_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'asdb1linked'"
+		},
+		"Snowflake_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Snowflake'"
 		}
 	},
 	"variables": {
@@ -46,6 +50,19 @@
 				"type": "AzureSqlDatabase",
 				"typeProperties": {
 					"connectionString": "[parameters('AzureSqlDatabase1_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Snowflake')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "Snowflake",
+				"typeProperties": {
+					"connectionString": "[parameters('Snowflake_connectionString')]"
 				}
 			},
 			"dependsOn": []
@@ -179,6 +196,52 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable3')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Empid",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Deptid",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Designation",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Reports To",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Salary",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "EmpSrc"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DelimitedText1')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -265,6 +328,145 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DelimitedText3')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "Student Survey.csv",
+						"container": "con1"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Survey ID",
+						"type": "String"
+					},
+					{
+						"name": "Store Number",
+						"type": "String"
+					},
+					{
+						"name": "Store Location",
+						"type": "String"
+					},
+					{
+						"name": "Store Setting",
+						"type": "String"
+					},
+					{
+						"name": "Age",
+						"type": "String"
+					},
+					{
+						"name": "Exchange",
+						"type": "String"
+					},
+					{
+						"name": "Survey Date ",
+						"type": "String"
+					},
+					{
+						"name": "VideoGames",
+						"type": "String"
+					},
+					{
+						"name": "Academic Books",
+						"type": "String"
+					},
+					{
+						"name": "Toys",
+						"type": "String"
+					},
+					{
+						"name": "OutDoor SportKits",
+						"type": "String"
+					},
+					{
+						"name": "InDoor SportKits",
+						"type": "String"
+					},
+					{
+						"name": "Gadgets",
+						"type": "String"
+					},
+					{
+						"name": "NonAcademic Books",
+						"type": "String"
+					},
+					{
+						"name": "Number of Items Purchased",
+						"type": "String"
+					},
+					{
+						"name": "Total Amount of Purchases",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/EmpTar')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Empid",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Deptid",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Designation",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Reports To",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Salary",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "EmpTar"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
 			]
 		},
 		{
@@ -589,95 +791,23 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/AzureSqlTable3')]",
+			"name": "[concat(parameters('factoryName'), '/SnowflakeTable1')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase1",
+					"referenceName": "Snowflake",
 					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "Empid",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "Deptid",
-						"type": "nvarchar"
-					},
-					{
-						"name": "Designation",
-						"type": "nvarchar"
-					},
-					{
-						"name": "Reports To",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "Salary",
-						"type": "money",
-						"precision": 19,
-						"scale": 4
-					}
-				],
+				"type": "SnowflakeTable",
+				"schema": [],
 				"typeProperties": {
-					"schema": "dbo",
-					"table": "EmpSrc"
+					"table": "StudentSurvey"
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/EmpTar')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabase1",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "Empid",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "Deptid",
-						"type": "nvarchar"
-					},
-					{
-						"name": "Designation",
-						"type": "nvarchar"
-					},
-					{
-						"name": "Reports To",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "Salary",
-						"type": "money",
-						"precision": 19,
-						"scale": 4
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "EmpTar"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+				"[concat(variables('factoryId'), '/linkedServices/Snowflake')]"
 			]
 		},
 		{
@@ -871,69 +1001,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/dataflow_merge')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "AzureSqlTable1",
-								"type": "DatasetReference"
-							},
-							"name": "POH"
-						},
-						{
-							"dataset": {
-								"referenceName": "POD",
-								"type": "DatasetReference"
-							},
-							"name": "POD"
-						},
-						{
-							"dataset": {
-								"referenceName": "Product",
-								"type": "DatasetReference"
-							},
-							"name": "Product"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "AzureSqlTable2",
-								"type": "DatasetReference"
-							},
-							"name": "ProductOrderFactDim"
-						}
-					],
-					"transformations": [
-						{
-							"name": "PurchaseOrderID"
-						},
-						{
-							"name": "POHPOD"
-						},
-						{
-							"name": "ProductID"
-						},
-						{
-							"name": "ProductSelect"
-						}
-					],
-					"script": "source(output(\n\t\tPurchaseOrderID as integer,\n\t\tRevisionNumber as integer,\n\t\tStatus as integer,\n\t\tEmployeeID as integer,\n\t\tVendorID as integer,\n\t\tShipMethodID as integer,\n\t\tOrderDate as timestamp,\n\t\tShipDate as timestamp,\n\t\tSubTotal as decimal(19,4),\n\t\tTaxAmt as decimal(19,4),\n\t\tFreight as decimal(19,4),\n\t\tTotalDue as decimal(19,4),\n\t\tModifiedDate as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> POH\nsource(output(\n\t\tPurchaseOrderID as integer,\n\t\tModifiedDate as timestamp,\n\t\tPurchaseOrderDetailID as integer,\n\t\tDueDate as timestamp,\n\t\tOrderQty as integer,\n\t\tProductID as integer,\n\t\tUnitPrice as decimal(19,4),\n\t\tLineTotal as decimal(19,4),\n\t\tReceivedQty as decimal(8,2),\n\t\tRejectedQty as decimal(8,2),\n\t\tStockedQty as decimal(9,2),\n\t\tRevisionNumber as integer,\n\t\tStatus as integer,\n\t\tEmployeeID as integer,\n\t\tVendorID as integer,\n\t\tShipMethodID as integer,\n\t\tOrderDate as timestamp,\n\t\tShipDate as timestamp,\n\t\tSubTotal as decimal(19,4),\n\t\tTaxAmt as decimal(19,4),\n\t\tFreight as decimal(19,4),\n\t\tTotalDue as decimal(19,4)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> POD\nsource(output(\n\t\tModifiedDate as timestamp,\n\t\tProductID as integer,\n\t\tName as string,\n\t\tProductNumber as string,\n\t\tMakeFlag as boolean,\n\t\tFinishedGoodsFlag as boolean,\n\t\tColor as string,\n\t\tSafetyStockLevel as integer,\n\t\tReorderPoint as integer,\n\t\tStandardCost as decimal(19,4),\n\t\tListPrice as decimal(19,4),\n\t\tSize as string,\n\t\tSizeUnitMeasureCode as string,\n\t\tWeightUnitMeasureCode as string,\n\t\tWeight as decimal(8,2),\n\t\tDaysToManufacture as integer,\n\t\tProductLine as string,\n\t\tClass as string,\n\t\tStyle as string,\n\t\tProductSubcategoryID as integer,\n\t\tProductModelID as integer,\n\t\tSellStartDate as timestamp,\n\t\tSellEndDate as timestamp,\n\t\tDiscontinuedDate as timestamp,\n\t\trowguid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> Product\nPOH, POD join(POH@PurchaseOrderID == POD@PurchaseOrderID,\n\tjoinType:'inner',\n\tbroadcast: 'auto')~> PurchaseOrderID\nPurchaseOrderID select(mapColumn(\n\t\tPurchaseOrderID = POH@PurchaseOrderID,\n\t\tRevisionNumber = POH@RevisionNumber,\n\t\tStatus = POH@Status,\n\t\tEmployeeID = POH@EmployeeID,\n\t\tVendorID = POH@VendorID,\n\t\tShipMethodID = POH@ShipMethodID,\n\t\tOrderDate = POH@OrderDate,\n\t\tShipDate = POH@ShipDate,\n\t\tTaxAmt = POH@TaxAmt,\n\t\tFreight = POH@Freight,\n\t\tModifiedDate = POH@ModifiedDate,\n\t\tPurchaseOrderID = POD@PurchaseOrderID,\n\t\tModifiedDate = POD@ModifiedDate,\n\t\tDueDate,\n\t\tOrderQty,\n\t\tProductID,\n\t\tUnitPrice,\n\t\tLineTotal,\n\t\tReceivedQty,\n\t\tRejectedQty,\n\t\tStockedQty,\n\t\tRevisionNumber = POD@RevisionNumber,\n\t\tStatus = POD@Status,\n\t\tEmployeeID = POD@EmployeeID,\n\t\tVendorID = POD@VendorID,\n\t\tShipMethodID = POD@ShipMethodID,\n\t\tOrderDate = POD@OrderDate,\n\t\tShipDate = POD@ShipDate,\n\t\tSubTotal = POD@SubTotal,\n\t\tTaxAmt = POD@TaxAmt,\n\t\tFreight = POD@Freight,\n\t\tTotalDue = POD@TotalDue\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> POHPOD\nPOHPOD, ProductSelect join(POHPOD@ProductID == ProductSelect@ProductID,\n\tjoinType:'inner',\n\tbroadcast: 'auto')~> ProductID\nProduct select(mapColumn(\n\t\tModifiedDate,\n\t\tProductID,\n\t\tName,\n\t\tProductNumber,\n\t\tMakeFlag,\n\t\tFinishedGoodsFlag,\n\t\tColor,\n\t\tSafetyStockLevel,\n\t\tReorderPoint,\n\t\tStandardCost,\n\t\tListPrice,\n\t\tSize,\n\t\tSizeUnitMeasureCode,\n\t\tWeightUnitMeasureCode,\n\t\tWeight,\n\t\tDaysToManufacture,\n\t\tProductLine,\n\t\tClass,\n\t\tStyle,\n\t\tProductSubcategoryID,\n\t\tProductModelID,\n\t\tSellStartDate,\n\t\tSellEndDate,\n\t\tDiscontinuedDate,\n\t\trowguid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> ProductSelect\nProductID sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> ProductOrderFactDim"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/AzureSqlTable1')]",
-				"[concat(variables('factoryId'), '/datasets/POD')]",
-				"[concat(variables('factoryId'), '/datasets/Product')]",
-				"[concat(variables('factoryId'), '/datasets/AzureSqlTable2')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/SCD_Type1')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -995,148 +1062,100 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/POHaggregate')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
+			"name": "[concat(parameters('factoryName'), '/Snowflaketest')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"activities": [
-					{
-						"name": "POHaggregate",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "1.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "POHaggregate",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"POH": {},
-									"sink1": {}
-								}
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DelimitedText3",
+								"type": "DatasetReference"
 							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
+							"name": "StudentSurvey"
 						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "SnowflakeTable1",
+								"type": "DatasetReference"
+							},
+							"name": "StudSrveyToSnFlk"
+						}
+					],
+					"transformations": [],
+					"script": "source(output(\n\t\t{Survey ID} as string,\n\t\t{Store Number} as string,\n\t\t{Store Location} as string,\n\t\t{Store Setting} as string,\n\t\tAge as string,\n\t\tExchange as string,\n\t\t{Survey Date } as string,\n\t\tVideoGames as string,\n\t\t{Academic Books} as string,\n\t\tToys as string,\n\t\t{OutDoor SportKits} as string,\n\t\t{InDoor SportKits} as string,\n\t\tGadgets as string,\n\t\t{NonAcademic Books} as string,\n\t\t{Number of Items Purchased} as string,\n\t\t{Total Amount of Purchases} as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> StudentSurvey\nStudentSurvey sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\tstageInsert: true) ~> StudSrveyToSnFlk"
+				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/POHaggregate')]"
+				"[concat(variables('factoryId'), '/datasets/DelimitedText3')]",
+				"[concat(variables('factoryId'), '/datasets/SnowflakeTable1')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/PurchaseMergeJoin')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
+			"name": "[concat(parameters('factoryName'), '/dataflow_merge')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"activities": [
-					{
-						"name": "Data flow1",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "1.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable1",
+								"type": "DatasetReference"
+							},
+							"name": "POH"
 						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "dataflow_merge",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"POH": {},
-									"POD": {},
-									"Product": {},
-									"ProductOrderFactDim": {}
-								}
+						{
+							"dataset": {
+								"referenceName": "POD",
+								"type": "DatasetReference"
 							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
+							"name": "POD"
+						},
+						{
+							"dataset": {
+								"referenceName": "Product",
+								"type": "DatasetReference"
 							},
-							"traceLevel": "Fine"
+							"name": "Product"
 						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable2",
+								"type": "DatasetReference"
+							},
+							"name": "ProductOrderFactDim"
+						}
+					],
+					"transformations": [
+						{
+							"name": "PurchaseOrderID"
+						},
+						{
+							"name": "POHPOD"
+						},
+						{
+							"name": "ProductID"
+						},
+						{
+							"name": "ProductSelect"
+						}
+					],
+					"script": "source(output(\n\t\tPurchaseOrderID as integer,\n\t\tRevisionNumber as integer,\n\t\tStatus as integer,\n\t\tEmployeeID as integer,\n\t\tVendorID as integer,\n\t\tShipMethodID as integer,\n\t\tOrderDate as timestamp,\n\t\tShipDate as timestamp,\n\t\tSubTotal as decimal(19,4),\n\t\tTaxAmt as decimal(19,4),\n\t\tFreight as decimal(19,4),\n\t\tTotalDue as decimal(19,4),\n\t\tModifiedDate as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> POH\nsource(output(\n\t\tPurchaseOrderID as integer,\n\t\tModifiedDate as timestamp,\n\t\tPurchaseOrderDetailID as integer,\n\t\tDueDate as timestamp,\n\t\tOrderQty as integer,\n\t\tProductID as integer,\n\t\tUnitPrice as decimal(19,4),\n\t\tLineTotal as decimal(19,4),\n\t\tReceivedQty as decimal(8,2),\n\t\tRejectedQty as decimal(8,2),\n\t\tStockedQty as decimal(9,2),\n\t\tRevisionNumber as integer,\n\t\tStatus as integer,\n\t\tEmployeeID as integer,\n\t\tVendorID as integer,\n\t\tShipMethodID as integer,\n\t\tOrderDate as timestamp,\n\t\tShipDate as timestamp,\n\t\tSubTotal as decimal(19,4),\n\t\tTaxAmt as decimal(19,4),\n\t\tFreight as decimal(19,4),\n\t\tTotalDue as decimal(19,4)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> POD\nsource(output(\n\t\tModifiedDate as timestamp,\n\t\tProductID as integer,\n\t\tName as string,\n\t\tProductNumber as string,\n\t\tMakeFlag as boolean,\n\t\tFinishedGoodsFlag as boolean,\n\t\tColor as string,\n\t\tSafetyStockLevel as integer,\n\t\tReorderPoint as integer,\n\t\tStandardCost as decimal(19,4),\n\t\tListPrice as decimal(19,4),\n\t\tSize as string,\n\t\tSizeUnitMeasureCode as string,\n\t\tWeightUnitMeasureCode as string,\n\t\tWeight as decimal(8,2),\n\t\tDaysToManufacture as integer,\n\t\tProductLine as string,\n\t\tClass as string,\n\t\tStyle as string,\n\t\tProductSubcategoryID as integer,\n\t\tProductModelID as integer,\n\t\tSellStartDate as timestamp,\n\t\tSellEndDate as timestamp,\n\t\tDiscontinuedDate as timestamp,\n\t\trowguid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> Product\nPOH, POD join(POH@PurchaseOrderID == POD@PurchaseOrderID,\n\tjoinType:'inner',\n\tbroadcast: 'auto')~> PurchaseOrderID\nPurchaseOrderID select(mapColumn(\n\t\tPurchaseOrderID = POH@PurchaseOrderID,\n\t\tRevisionNumber = POH@RevisionNumber,\n\t\tStatus = POH@Status,\n\t\tEmployeeID = POH@EmployeeID,\n\t\tVendorID = POH@VendorID,\n\t\tShipMethodID = POH@ShipMethodID,\n\t\tOrderDate = POH@OrderDate,\n\t\tShipDate = POH@ShipDate,\n\t\tTaxAmt = POH@TaxAmt,\n\t\tFreight = POH@Freight,\n\t\tModifiedDate = POH@ModifiedDate,\n\t\tPurchaseOrderID = POD@PurchaseOrderID,\n\t\tModifiedDate = POD@ModifiedDate,\n\t\tDueDate,\n\t\tOrderQty,\n\t\tProductID,\n\t\tUnitPrice,\n\t\tLineTotal,\n\t\tReceivedQty,\n\t\tRejectedQty,\n\t\tStockedQty,\n\t\tRevisionNumber = POD@RevisionNumber,\n\t\tStatus = POD@Status,\n\t\tEmployeeID = POD@EmployeeID,\n\t\tVendorID = POD@VendorID,\n\t\tShipMethodID = POD@ShipMethodID,\n\t\tOrderDate = POD@OrderDate,\n\t\tShipDate = POD@ShipDate,\n\t\tSubTotal = POD@SubTotal,\n\t\tTaxAmt = POD@TaxAmt,\n\t\tFreight = POD@Freight,\n\t\tTotalDue = POD@TotalDue\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> POHPOD\nPOHPOD, ProductSelect join(POHPOD@ProductID == ProductSelect@ProductID,\n\tjoinType:'inner',\n\tbroadcast: 'auto')~> ProductID\nProduct select(mapColumn(\n\t\tModifiedDate,\n\t\tProductID,\n\t\tName,\n\t\tProductNumber,\n\t\tMakeFlag,\n\t\tFinishedGoodsFlag,\n\t\tColor,\n\t\tSafetyStockLevel,\n\t\tReorderPoint,\n\t\tStandardCost,\n\t\tListPrice,\n\t\tSize,\n\t\tSizeUnitMeasureCode,\n\t\tWeightUnitMeasureCode,\n\t\tWeight,\n\t\tDaysToManufacture,\n\t\tProductLine,\n\t\tClass,\n\t\tStyle,\n\t\tProductSubcategoryID,\n\t\tProductModelID,\n\t\tSellStartDate,\n\t\tSellEndDate,\n\t\tDiscontinuedDate,\n\t\trowguid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> ProductSelect\nProductID sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> ProductOrderFactDim"
+				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/dataflow_merge')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/SCD_Type1')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Data flow1",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "1.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "SCD_Type1",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"EmpSrc": {},
-									"EmpTar": {},
-									"EmpTarSinkInsert": {},
-									"EmpTarSinkUpdate": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/SCD_Type1')]"
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable1')]",
+				"[concat(variables('factoryId'), '/datasets/POD')]",
+				"[concat(variables('factoryId'), '/datasets/Product')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable2')]"
 			]
 		}
 	]

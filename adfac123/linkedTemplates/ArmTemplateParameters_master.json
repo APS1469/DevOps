@@ -14,6 +14,9 @@
 		"asdb1linked_connectionString": {
 			"value": ""
 		},
+		"Snowflake_connectionString": {
+			"value": ""
+		},
 		"containerUri": {
 			"value": ""
 		},
