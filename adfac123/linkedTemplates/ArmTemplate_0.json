@@ -589,6 +589,98 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable3')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Empid",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Deptid",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Designation",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Reports To",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Salary",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "EmpSrc"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/EmpTar')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Empid",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Deptid",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Designation",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Reports To",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Salary",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "EmpTar"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/GetMetadataFilter')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -842,6 +934,67 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/SCD_Type1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable3",
+								"type": "DatasetReference"
+							},
+							"name": "EmpSrc"
+						},
+						{
+							"dataset": {
+								"referenceName": "EmpTar",
+								"type": "DatasetReference"
+							},
+							"name": "EmpTar"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "EmpTar",
+								"type": "DatasetReference"
+							},
+							"name": "EmpTarSinkInsert"
+						},
+						{
+							"dataset": {
+								"referenceName": "EmpTar",
+								"type": "DatasetReference"
+							},
+							"name": "EmpTarSinkUpdate"
+						}
+					],
+					"transformations": [
+						{
+							"name": "Select1"
+						},
+						{
+							"name": "Lookup1"
+						},
+						{
+							"name": "Insert"
+						},
+						{
+							"name": "AlterRow1"
+						}
+					],
+					"script": "source(output(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpSrc\nsource(output(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpTar\nEmpTar select(mapColumn(\n\t\tEmpid_lkp = Empid,\n\t\tDeptid_lkp = Deptid,\n\t\tDesignation_lkp = Designation,\n\t\t{Reports To_lkp} = {Reports To},\n\t\tSalary_lkp = Salary\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Select1\nEmpSrc, Select1 lookup(Empid == Empid_lkp,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> Lookup1\nLookup1 split(isNull(Empid_lkp),\n\tdisjoint: false) ~> Insert@(Insert, Update)\nInsert@Update alterRow(updateIf(true())) ~> AlterRow1\nInsert@Insert sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tEmpid,\n\t\tDeptid,\n\t\tDesignation,\n\t\t{Reports To},\n\t\tSalary\n\t)) ~> EmpTarSinkInsert\nAlterRow1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:true,\n\tupsertable:false,\n\tkeys:['Empid'],\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tEmpid,\n\t\tDeptid,\n\t\tDesignation,\n\t\t{Reports To},\n\t\tSalary\n\t)) ~> EmpTarSinkUpdate"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable3')]",
+				"[concat(variables('factoryId'), '/datasets/EmpTar')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/POHaggregate')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -935,6 +1088,55 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/dataflow_merge')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SCD_Type1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "SCD_Type1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpSrc": {},
+									"EmpTar": {},
+									"EmpTarSinkInsert": {},
+									"EmpTarSinkUpdate": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/SCD_Type1')]"
 			]
 		}
 	]
