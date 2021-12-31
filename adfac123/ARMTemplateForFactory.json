@@ -1349,6 +1349,119 @@
 				"[concat(variables('factoryId'), '/datasets/Product')]",
 				"[concat(variables('factoryId'), '/datasets/AzureSqlTable2')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SCD_Type1Delete')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "SCD_Type1Delete",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpSrc": {},
+									"EmpTar": {},
+									"UpdateToEmpTar": {},
+									"DeleteFromEmpTar": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/SCD_Type1Delete')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SCD_Type1Delete')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable3",
+								"type": "DatasetReference"
+							},
+							"name": "EmpSrc"
+						},
+						{
+							"dataset": {
+								"referenceName": "EmpTar",
+								"type": "DatasetReference"
+							},
+							"name": "EmpTar"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "EmpTar",
+								"type": "DatasetReference"
+							},
+							"name": "UpdateToEmpTar"
+						},
+						{
+							"dataset": {
+								"referenceName": "EmpTar",
+								"type": "DatasetReference"
+							},
+							"name": "DeleteFromEmpTar"
+						}
+					],
+					"transformations": [
+						{
+							"name": "EmpTarLkp"
+						},
+						{
+							"name": "SrcTarCompare"
+						},
+						{
+							"name": "UpsertRecords"
+						},
+						{
+							"name": "DoesNotExistInSrc"
+						},
+						{
+							"name": "Delete"
+						}
+					],
+					"script": "source(output(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpSrc\nsource(output(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpTar\nEmpTar select(mapColumn(\n\t\tEmpid_lkp = Empid,\n\t\tDeptid_lkp = Deptid,\n\t\tDesignation_lkp = Designation,\n\t\t{Reports To_lkp} = {Reports To},\n\t\tSalary_lkp = Salary\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> EmpTarLkp\nEmpSrc, EmpTarLkp lookup(Empid == Empid_lkp,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> SrcTarCompare\nSrcTarCompare alterRow(upsertIf(true())) ~> UpsertRecords\nEmpTar, EmpSrc exists(EmpTar@Empid == EmpSrc@Empid,\n\tnegate:true,\n\tbroadcast: 'auto')~> DoesNotExistInSrc\nDoesNotExistInSrc alterRow(deleteIf(isNull(Empid))) ~> Delete\nUpsertRecords sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['Empid'],\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> UpdateToEmpTar\nDelete sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tdeletable:true,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:false,\n\tkeys:['Empid'],\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tEmpid,\n\t\tDeptid,\n\t\tDesignation,\n\t\t{Reports To},\n\t\tSalary\n\t)) ~> DeleteFromEmpTar"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable3')]",
+				"[concat(variables('factoryId'), '/datasets/EmpTar')]"
+			]
 		}
 	]
 }
