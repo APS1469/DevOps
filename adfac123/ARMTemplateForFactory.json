@@ -323,6 +323,55 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/SCD_Type1Delete')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "SCD_Type1Delete",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpSrc": {},
+									"EmpTar": {},
+									"UpdateToEmpTar": {},
+									"DeleteFromEmpTar": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/SCD_Type1Delete')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/SnowFlake')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1254,6 +1303,70 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/SCD_Type1Delete')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "AzureSqlTable3",
+								"type": "DatasetReference"
+							},
+							"name": "EmpSrc"
+						},
+						{
+							"dataset": {
+								"referenceName": "EmpTar",
+								"type": "DatasetReference"
+							},
+							"name": "EmpTar"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "EmpTar",
+								"type": "DatasetReference"
+							},
+							"name": "UpdateToEmpTar"
+						},
+						{
+							"dataset": {
+								"referenceName": "EmpTar",
+								"type": "DatasetReference"
+							},
+							"name": "DeleteFromEmpTar"
+						}
+					],
+					"transformations": [
+						{
+							"name": "EmpTarLkp"
+						},
+						{
+							"name": "SrcTarCompare"
+						},
+						{
+							"name": "UpsertRecords"
+						},
+						{
+							"name": "DoesNotExistInSrc"
+						},
+						{
+							"name": "Delete"
+						}
+					],
+					"script": "source(output(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpSrc\nsource(output(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpTar\nEmpTar select(mapColumn(\n\t\tEmpid_lkp = Empid,\n\t\tDeptid_lkp = Deptid,\n\t\tDesignation_lkp = Designation,\n\t\t{Reports To_lkp} = {Reports To},\n\t\tSalary_lkp = Salary\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> EmpTarLkp\nEmpSrc, EmpTarLkp lookup(Empid == Empid_lkp,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> SrcTarCompare\nSrcTarCompare alterRow(upsertIf(true())) ~> UpsertRecords\nEmpTar, EmpSrc exists(EmpTar@Empid == EmpSrc@Empid,\n\tnegate:true,\n\tbroadcast: 'auto')~> DoesNotExistInSrc\nDoesNotExistInSrc alterRow(deleteIf(isNull(Empid))) ~> Delete\nUpsertRecords sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['Empid'],\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> UpdateToEmpTar\nDelete sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tdeletable:true,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:false,\n\tkeys:['Empid'],\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tEmpid,\n\t\tDeptid,\n\t\tDesignation,\n\t\t{Reports To},\n\t\tSalary\n\t)) ~> DeleteFromEmpTar"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable3')]",
+				"[concat(variables('factoryId'), '/datasets/EmpTar')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Snowflaketest')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -1351,7 +1464,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/SCD_Type1Delete')]",
+			"name": "[concat(parameters('factoryName'), '/SCD_Type2')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -1370,14 +1483,14 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "SCD_Type1Delete",
+								"referenceName": "SCD_Type2",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
-									"EmpSrc": {},
-									"EmpTar": {},
-									"UpdateToEmpTar": {},
-									"DeleteFromEmpTar": {}
+									"EmpSrcT2": {},
+									"EmpTarT2": {},
+									"SinkEmpTarT2": {},
+									"EmpTarT2Sink": {}
 								}
 							},
 							"staging": {},
@@ -1396,11 +1509,11 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/SCD_Type1Delete')]"
+				"[concat(variables('factoryId'), '/dataflows/SCD_Type2')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/SCD_Type1Delete')]",
+			"name": "[concat(parameters('factoryName'), '/SCD_Type2')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -1409,58 +1522,151 @@
 					"sources": [
 						{
 							"dataset": {
-								"referenceName": "AzureSqlTable3",
+								"referenceName": "EmpSrcT2",
 								"type": "DatasetReference"
 							},
-							"name": "EmpSrc"
+							"name": "EmpSrcT2"
 						},
 						{
 							"dataset": {
-								"referenceName": "EmpTar",
+								"referenceName": "EmpTarT2",
 								"type": "DatasetReference"
 							},
-							"name": "EmpTar"
+							"name": "EmpTarT2"
 						}
 					],
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "EmpTar",
+								"referenceName": "EmpTarT2",
 								"type": "DatasetReference"
 							},
-							"name": "UpdateToEmpTar"
+							"name": "SinkEmpTarT2"
 						},
 						{
 							"dataset": {
-								"referenceName": "EmpTar",
+								"referenceName": "EmpTarT2",
 								"type": "DatasetReference"
 							},
-							"name": "DeleteFromEmpTar"
+							"name": "EmpTarT2Sink"
 						}
 					],
 					"transformations": [
 						{
-							"name": "EmpTarLkp"
+							"name": "SrcHarshKey"
 						},
 						{
-							"name": "SrcTarCompare"
+							"name": "TarHarshKey"
 						},
 						{
-							"name": "UpsertRecords"
+							"name": "Exists1"
 						},
 						{
-							"name": "DoesNotExistInSrc"
+							"name": "SetActiveEndDate"
 						},
 						{
-							"name": "Delete"
+							"name": "Exists"
+						},
+						{
+							"name": "EndDateActive"
+						},
+						{
+							"name": "Update"
 						}
 					],
-					"script": "source(output(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpSrc\nsource(output(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpTar\nEmpTar select(mapColumn(\n\t\tEmpid_lkp = Empid,\n\t\tDeptid_lkp = Deptid,\n\t\tDesignation_lkp = Designation,\n\t\t{Reports To_lkp} = {Reports To},\n\t\tSalary_lkp = Salary\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> EmpTarLkp\nEmpSrc, EmpTarLkp lookup(Empid == Empid_lkp,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> SrcTarCompare\nSrcTarCompare alterRow(upsertIf(true())) ~> UpsertRecords\nEmpTar, EmpSrc exists(EmpTar@Empid == EmpSrc@Empid,\n\tnegate:true,\n\tbroadcast: 'auto')~> DoesNotExistInSrc\nDoesNotExistInSrc alterRow(deleteIf(isNull(Empid))) ~> Delete\nUpsertRecords sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:true,\n\tkeys:['Empid'],\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> UpdateToEmpTar\nDelete sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpid as integer,\n\t\tDeptid as string,\n\t\tDesignation as string,\n\t\t{Reports To} as integer,\n\t\tSalary as decimal(19,4)\n\t),\n\tdeletable:true,\n\tinsertable:false,\n\tupdateable:false,\n\tupsertable:false,\n\tkeys:['Empid'],\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tEmpid,\n\t\tDeptid,\n\t\tDesignation,\n\t\t{Reports To},\n\t\tSalary\n\t)) ~> DeleteFromEmpTar"
+					"script": "source(output(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tStartDate as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpSrcT2\nsource(output(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpTarT2\nEmpSrcT2 derive(Harshkey_Src = md5(EmpName,Dept)) ~> SrcHarshKey\nEmpTarT2 derive(Harshkey_Tar = md5(EmpName,Dept)) ~> TarHarshKey\nSrcHarshKey, TarHarshKey exists(Harshkey_Src == Harshkey_Tar,\n\tnegate:true,\n\tbroadcast: 'auto')~> Exists1\nExists1 derive(Active = 1,\n\t\tEndDate = toDate('1999-12-31')) ~> SetActiveEndDate\nTarHarshKey, SetActiveEndDate exists(EmpTarT2@EmpID == EmpSrcT2@EmpID\n\t&&EmpTarT2@EmpName == EmpSrcT2@EmpName,\n\tnegate:false,\n\tbroadcast: 'auto')~> Exists\nExists derive(EndDate = toDate(currentUTC()),\n\t\tActive = 0) ~> EndDateActive\nEndDateActive alterRow(updateIf(true())) ~> Update\nSetActiveEndDate sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> SinkEmpTarT2\nUpdate sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> EmpTarT2Sink"
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/AzureSqlTable3')]",
-				"[concat(variables('factoryId'), '/datasets/EmpTar')]"
+				"[concat(variables('factoryId'), '/datasets/EmpSrcT2')]",
+				"[concat(variables('factoryId'), '/datasets/EmpTarT2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/EmpSrcT2')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "EmpName",
+						"type": "varchar"
+					},
+					{
+						"name": "Dept",
+						"type": "varchar"
+					},
+					{
+						"name": "StartDate",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "EmpSrc_Type2"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/EmpTarT2')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "EmpName",
+						"type": "varchar"
+					},
+					{
+						"name": "Dept",
+						"type": "varchar"
+					},
+					{
+						"name": "Active",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "StartDate",
+						"type": "date"
+					},
+					{
+						"name": "EndDate",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "EmpTar_Type2"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
 			]
 		}
 	]
