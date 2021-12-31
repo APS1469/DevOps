@@ -12,9 +12,17 @@
 					"name": "StudentSurvey"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "SnowflakeTable1",
+						"type": "DatasetReference"
+					},
+					"name": "StudSrveyToSnFlk"
+				}
+			],
 			"transformations": [],
-			"script": "source(output(\n\t\t{Survey ID} as string,\n\t\t{Store Number} as string,\n\t\t{Store Location} as string,\n\t\t{Store Setting} as string,\n\t\tAge as string,\n\t\tExchange as string,\n\t\t{Survey Date } as string,\n\t\tVideoGames as string,\n\t\t{Academic Books} as string,\n\t\tToys as string,\n\t\t{OutDoor SportKits} as string,\n\t\t{InDoor SportKits} as string,\n\t\tGadgets as string,\n\t\t{NonAcademic Books} as string,\n\t\t{Number of Items Purchased} as string,\n\t\t{Total Amount of Purchases} as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> StudentSurvey"
+			"script": "source(output(\n\t\t{Survey ID} as string,\n\t\t{Store Number} as string,\n\t\t{Store Location} as string,\n\t\t{Store Setting} as string,\n\t\tAge as string,\n\t\tExchange as string,\n\t\t{Survey Date } as string,\n\t\tVideoGames as string,\n\t\t{Academic Books} as string,\n\t\tToys as string,\n\t\t{OutDoor SportKits} as string,\n\t\t{InDoor SportKits} as string,\n\t\tGadgets as string,\n\t\t{NonAcademic Books} as string,\n\t\t{Number of Items Purchased} as string,\n\t\t{Total Amount of Purchases} as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> StudentSurvey\nStudentSurvey sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\tstageInsert: true) ~> StudSrveyToSnFlk"
 		}
 	}
 }
