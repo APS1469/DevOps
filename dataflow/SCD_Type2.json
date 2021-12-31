@@ -1,0 +1,64 @@
+{
+	"name": "SCD_Type2",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "EmpSrcT2",
+						"type": "DatasetReference"
+					},
+					"name": "EmpSrcT2"
+				},
+				{
+					"dataset": {
+						"referenceName": "EmpTarT2",
+						"type": "DatasetReference"
+					},
+					"name": "EmpTarT2"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "EmpTarT2",
+						"type": "DatasetReference"
+					},
+					"name": "SinkEmpTarT2"
+				},
+				{
+					"dataset": {
+						"referenceName": "EmpTarT2",
+						"type": "DatasetReference"
+					},
+					"name": "EmpTarT2Sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "SrcHarshKey"
+				},
+				{
+					"name": "TarHarshKey"
+				},
+				{
+					"name": "Exists1"
+				},
+				{
+					"name": "SetActiveEndDate"
+				},
+				{
+					"name": "Exists"
+				},
+				{
+					"name": "EndDateActive"
+				},
+				{
+					"name": "Update"
+				}
+			],
+			"script": "source(output(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tStartDate as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpSrcT2\nsource(output(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpTarT2\nEmpSrcT2 derive(Harshkey_Src = md5(EmpName,Dept)) ~> SrcHarshKey\nEmpTarT2 derive(Harshkey_Tar = md5(EmpName,Dept)) ~> TarHarshKey\nSrcHarshKey, TarHarshKey exists(Harshkey_Src == Harshkey_Tar,\n\tnegate:true,\n\tbroadcast: 'auto')~> Exists1\nExists1 derive(Active = 1,\n\t\tEndDate = toDate('1999-12-31')) ~> SetActiveEndDate\nTarHarshKey, SetActiveEndDate exists(EmpTarT2@EmpID == EmpSrcT2@EmpID\n\t&&EmpTarT2@EmpName == EmpSrcT2@EmpName,\n\tnegate:false,\n\tbroadcast: 'auto')~> Exists\nExists derive(EndDate = toDate(currentUTC()),\n\t\tActive = 0) ~> EndDateActive\nEndDateActive alterRow(updateIf(true())) ~> Update\nSetActiveEndDate sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> SinkEmpTarT2\nUpdate sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> EmpTarT2Sink"
+		}
+	}
+}
