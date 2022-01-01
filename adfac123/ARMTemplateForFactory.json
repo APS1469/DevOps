@@ -372,6 +372,55 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/SCD_Type2')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "SCD_Type2",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EmpSrcT2": {},
+									"EmpTarT2": {},
+									"SinkEmpTarT2": {},
+									"EmpTarT2Sink": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/SCD_Type2')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/SnowFlake')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -762,6 +811,45 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/EmpSrcT2')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "EmpName",
+						"type": "varchar"
+					},
+					{
+						"name": "Dept",
+						"type": "varchar"
+					},
+					{
+						"name": "StartDate",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "EmpSrc_Type2"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/EmpTar')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -801,6 +889,54 @@
 				"typeProperties": {
 					"schema": "dbo",
 					"table": "EmpTar"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/EmpTarT2')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "EmpID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "EmpName",
+						"type": "varchar"
+					},
+					{
+						"name": "Dept",
+						"type": "varchar"
+					},
+					{
+						"name": "Active",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "StartDate",
+						"type": "date"
+					},
+					{
+						"name": "EndDate",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "EmpTar_Type2"
 				}
 			},
 			"dependsOn": [
@@ -1367,6 +1503,76 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/SCD_Type2')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmpSrcT2",
+								"type": "DatasetReference"
+							},
+							"name": "EmpSrcT2"
+						},
+						{
+							"dataset": {
+								"referenceName": "EmpTarT2",
+								"type": "DatasetReference"
+							},
+							"name": "EmpTarT2"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "EmpTarT2",
+								"type": "DatasetReference"
+							},
+							"name": "SinkEmpTarT2"
+						},
+						{
+							"dataset": {
+								"referenceName": "EmpTarT2",
+								"type": "DatasetReference"
+							},
+							"name": "EmpTarT2Sink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "SrcHarshKey"
+						},
+						{
+							"name": "TarHarshKey"
+						},
+						{
+							"name": "Exists1"
+						},
+						{
+							"name": "SetActiveEndDate"
+						},
+						{
+							"name": "Exists"
+						},
+						{
+							"name": "EndDateActive"
+						},
+						{
+							"name": "Update"
+						}
+					],
+					"script": "source(output(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tStartDate as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpSrcT2\nsource(output(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpTarT2\nEmpSrcT2 derive(Harshkey_Src = md5(EmpName,Dept)) ~> SrcHarshKey\nEmpTarT2 derive(Harshkey_Tar = md5(EmpName,Dept)) ~> TarHarshKey\nSrcHarshKey, TarHarshKey exists(Harshkey_Src == Harshkey_Tar,\n\tnegate:true,\n\tbroadcast: 'auto')~> Exists1\nExists1 derive(Active = 1,\n\t\tEndDate = toDate('1999-12-31')) ~> SetActiveEndDate\nTarHarshKey, SetActiveEndDate exists(EmpTarT2@EmpID == EmpSrcT2@EmpID\n\t&&EmpTarT2@EmpName == EmpSrcT2@EmpName,\n\tnegate:false,\n\tbroadcast: 'auto')~> Exists\nExists derive(EndDate = toDate(currentUTC()),\n\t\tActive = 0) ~> EndDateActive\nEndDateActive alterRow(updateIf(true())) ~> Update\nSetActiveEndDate sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> SinkEmpTarT2\nUpdate sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> EmpTarT2Sink"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/EmpSrcT2')]",
+				"[concat(variables('factoryId'), '/datasets/EmpTarT2')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Snowflaketest')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -1464,17 +1670,17 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/SCD_Type2')]",
+			"name": "[concat(parameters('factoryName'), '/CDC_Timestamp')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "Data flow1",
-						"type": "ExecuteDataFlow",
+						"name": "StartDate",
+						"type": "Lookup",
 						"dependsOn": [],
 						"policy": {
-							"timeout": "1.00:00:00",
+							"timeout": "7.00:00:00",
 							"retry": 0,
 							"retryIntervalInSeconds": 30,
 							"secureOutput": false,
@@ -1482,23 +1688,156 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"dataflow": {
-								"referenceName": "SCD_Type2",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"EmpSrcT2": {},
-									"EmpTarT2": {},
-									"SinkEmpTarT2": {},
-									"EmpTarT2Sink": {}
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "select TableName,WatermarkValue from watermarktable where TableName = '[dbo].[Orders_Src]'",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "AzureSqlTable4",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
+					},
+					{
+						"name": "EndDate",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "select max(OrderDate) as mdate from [dbo].[Orders_Src]",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "AzureSqlTable4",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
+					},
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "StartDate",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "EndDate",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "SELECT * FROM [dbo].[Orders_Src] where OrderDate >'@{activity('StartDate').output.firstRow.WatermarkValue}' AND\r\nOrderDate <= '@{activity('EndDate').output.firstRow.mdate}'",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
 								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureSqlTable5",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Orders_Tar",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Stored procedure1",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Copy data1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[spSetWatermark]",
+							"storedProcedureParameters": {
+								"NewTime": {
+									"value": {
+										"value": "@activity('EndDate').output.FirstRow.mdate",
+										"type": "Expression"
+									},
+									"type": "Datetime"
+								},
+								"TableName": {
+									"value": {
+										"value": "@activity('StartDate').output.firstrow.TableName",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureSqlDatabase1",
+							"type": "LinkedServiceReference"
 						}
 					}
 				],
@@ -1509,81 +1848,14 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/SCD_Type2')]"
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable4')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlTable5')]",
+				"[concat(variables('factoryId'), '/datasets/Orders_Tar')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/SCD_Type2')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "EmpSrcT2",
-								"type": "DatasetReference"
-							},
-							"name": "EmpSrcT2"
-						},
-						{
-							"dataset": {
-								"referenceName": "EmpTarT2",
-								"type": "DatasetReference"
-							},
-							"name": "EmpTarT2"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "EmpTarT2",
-								"type": "DatasetReference"
-							},
-							"name": "SinkEmpTarT2"
-						},
-						{
-							"dataset": {
-								"referenceName": "EmpTarT2",
-								"type": "DatasetReference"
-							},
-							"name": "EmpTarT2Sink"
-						}
-					],
-					"transformations": [
-						{
-							"name": "SrcHarshKey"
-						},
-						{
-							"name": "TarHarshKey"
-						},
-						{
-							"name": "Exists1"
-						},
-						{
-							"name": "SetActiveEndDate"
-						},
-						{
-							"name": "Exists"
-						},
-						{
-							"name": "EndDateActive"
-						},
-						{
-							"name": "Update"
-						}
-					],
-					"script": "source(output(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tStartDate as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpSrcT2\nsource(output(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> EmpTarT2\nEmpSrcT2 derive(Harshkey_Src = md5(EmpName,Dept)) ~> SrcHarshKey\nEmpTarT2 derive(Harshkey_Tar = md5(EmpName,Dept)) ~> TarHarshKey\nSrcHarshKey, TarHarshKey exists(Harshkey_Src == Harshkey_Tar,\n\tnegate:true,\n\tbroadcast: 'auto')~> Exists1\nExists1 derive(Active = 1,\n\t\tEndDate = toDate('1999-12-31')) ~> SetActiveEndDate\nTarHarshKey, SetActiveEndDate exists(EmpTarT2@EmpID == EmpSrcT2@EmpID\n\t&&EmpTarT2@EmpName == EmpSrcT2@EmpName,\n\tnegate:false,\n\tbroadcast: 'auto')~> Exists\nExists derive(EndDate = toDate(currentUTC()),\n\t\tActive = 0) ~> EndDateActive\nEndDateActive alterRow(updateIf(true())) ~> Update\nSetActiveEndDate sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> SinkEmpTarT2\nUpdate sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tEmpID as integer,\n\t\tEmpName as string,\n\t\tDept as string,\n\t\tActive as integer,\n\t\tStartDate as date,\n\t\tEndDate as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> EmpTarT2Sink"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/EmpSrcT2')]",
-				"[concat(variables('factoryId'), '/datasets/EmpTarT2')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/EmpSrcT2')]",
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable4')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -1595,26 +1867,17 @@
 				"type": "AzureSqlTable",
 				"schema": [
 					{
-						"name": "EmpID",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "EmpName",
+						"name": "TableName",
 						"type": "varchar"
 					},
 					{
-						"name": "Dept",
-						"type": "varchar"
-					},
-					{
-						"name": "StartDate",
+						"name": "WatermarkValue",
 						"type": "date"
 					}
 				],
 				"typeProperties": {
 					"schema": "dbo",
-					"table": "EmpSrc_Type2"
+					"table": "watermarktable"
 				}
 			},
 			"dependsOn": [
@@ -1622,7 +1885,25 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/EmpTarT2')]",
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable5')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Orders_Tar')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -1634,35 +1915,35 @@
 				"type": "AzureSqlTable",
 				"schema": [
 					{
-						"name": "EmpID",
+						"name": "OrderID",
 						"type": "int",
 						"precision": 10
 					},
 					{
-						"name": "EmpName",
-						"type": "varchar"
+						"name": "CustomerID",
+						"type": "nchar"
 					},
 					{
-						"name": "Dept",
-						"type": "varchar"
-					},
-					{
-						"name": "Active",
+						"name": "EmployeeID",
 						"type": "int",
 						"precision": 10
 					},
 					{
-						"name": "StartDate",
-						"type": "date"
+						"name": "OrderDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
 					},
 					{
-						"name": "EndDate",
-						"type": "date"
+						"name": "OrdAmt",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
 					}
 				],
 				"typeProperties": {
 					"schema": "dbo",
-					"table": "EmpTar_Type2"
+					"table": "Orders_Tar"
 				}
 			},
 			"dependsOn": [
