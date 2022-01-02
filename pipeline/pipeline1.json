@@ -26,13 +26,25 @@
 									"type": "SecureString",
 									"value": "**********"
 								}
-							},
-							"configurationPath": "\\\\asadlsgen2.file.core.windows.net\\ssdtexecution\\SSIS to Azure-20220102113410\\Package-tmp-20220102121118\\SSIStoAzureConfig.dtsConfig"
+							}
 						}
 					},
 					"connectVia": {
 						"referenceName": "Azure-SSIS",
 						"type": "IntegrationRuntimeReference"
+					},
+					"packageConnectionManagers": {
+						"as123.database.windows.net.asdb1.as123": {
+							"Name": {
+								"value": "as123.database.windows.net.asdb1.as123"
+							},
+							"Password": {
+								"value": {
+									"type": "SecureString",
+									"value": "**********"
+								}
+							}
+						}
 					}
 				}
 			}
