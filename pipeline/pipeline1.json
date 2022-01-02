@@ -33,16 +33,16 @@
 						"referenceName": "Azure-SSIS",
 						"type": "IntegrationRuntimeReference"
 					},
-					"propertyOverrides": {
-						"": {
-							"isSensitive": false
-						}
-					},
-					"packageParameters": {
-						"Password": {
-							"value": {
-								"type": "SecureString",
-								"value": "**********"
+					"packageConnectionManagers": {
+						"as123.database.windows.net.asdb1.as123": {
+							"Password": {
+								"value": {
+									"type": "SecureString",
+									"value": "**********"
+								}
+							},
+							"Name": {
+								"value": "as123"
 							}
 						}
 					}
