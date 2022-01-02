@@ -1,0 +1,51 @@
+{
+	"name": "pipeline1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute SSIS package1",
+				"type": "ExecuteSSISPackage",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"packageLocation": {
+						"packagePath": "\\\\asadlsgen2.file.core.windows.net\\ssdtexecution\\SSIS to Azure-20220102113410\\Package-tmp-20220102121118\\Package.dtsx",
+						"type": "File",
+						"typeProperties": {
+							"accessCredential": {
+								"domain": "Azure",
+								"userName": "asadlsgen2",
+								"password": {
+									"type": "SecureString",
+									"value": "**********"
+								}
+							}
+						}
+					},
+					"connectVia": {
+						"referenceName": "Azure-SSIS",
+						"type": "IntegrationRuntimeReference"
+					},
+					"packageConnectionManagers": {
+						"as123.database.windows.net.asdb1.as123": {
+							"Password": {
+								"value": {
+									"type": "SecureString",
+									"value": "**********"
+								}
+							}
+						}
+					}
+				}
+			}
+		],
+		"annotations": []
+	}
+}
